@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MathStudio Pro Multi-Lang</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        :root {
+            --bg-app: #f8f9ff;
+            --surface: #ffffff;
+            --primary: #6750a4;
+            --secondary: #eaddff;
+            --text-main: #1c1b1f;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 20px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-app: #141218;
+                --surface: #1d1b20;
+                --primary: #d0bcff;
+                --secondary: #4f378b;
+                --text-main: #e6e1e5;
+            }
+        }
+
+        body {
+            margin: 0; padding: 0; height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-app);
+            display: flex; flex-direction: row;
+            overflow: hidden; color: var(--text-main);
+        }
+
+        /* תמיכה בכיווניות LTR */
+        body[dir="ltr"] { flex-direction: row-reverse; }
+
+        @media (max-width: 768px) {
+            body, body[dir="ltr"] { flex-direction: column; overflow-y: auto; }
+            #side-panel { width: 100% !important; height: auto !important; order: 2; }
+            #canvas-container { height: 60vh; flex-shrink: 0; order: 1; border-bottom: 2px solid var(--secondary); }
+        }
+
+        #side-panel {
+            width: 380px; height: 100vh;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            display: flex; flex-direction: column;
+            overflow-y: auto; z-index: 10;
+        }
+
+        #canvas-container { flex-grow: 1; position: relative; background: #ffffff; cursor: crosshair; }
+        @media (prefers-color-scheme: dark) { #canvas-container { background: #1c1b1f; } }
+        canvas { display: block; touch-action: none; width: 100%; height: 100%; }
+
+        .section-box { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        
+        /* שורת שפה */
+        .lang-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: var(--bg-app);
+            padding: 8px;
+            border-radius: 10px;
+        }
+        
+        #lang-selector {
+            flex: 1; padding: 5px; border-radius: 6px;
+            background: var(--secondary); border: none; color: var(--primary);
+            font-weight: bold; cursor: pointer;
+        }
+
+        #calc-screen {
+            width: 100%; background: var(--bg-app);
+            border: 2px solid var(--secondary); border-radius: 12px;
+            padding: 12px; font-size: 1.4rem; color: var(--text-main);
+            margin-bottom: 10px; box-sizing: border-box; text-align: left;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        button {
+            border: none; border-radius: 10px; padding: 10px 5px;
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+            background: var(--secondary); color: var(--primary);
+        }
+        button:active { transform: scale(0.95); }
+        .btn-num { background: var(--bg-app); color: var(--text-main); }
+        .btn-equal { background: var(--primary); color: white; grid-column: span 2; }
+
+        #history-list {
+            max-height: 120px; overflow-y: auto; font-size: 0.85rem;
+            background: rgba(0,0,0,0.03); border-radius: 8px; padding: 5px;
+        }
+        .hist-item {
+            padding: 4px 8px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            cursor: pointer; display: flex; justify-content: space-between;
+        }
+
+        .color-palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 15px; }
+        .color-circle { 
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer; 
+            border: 2px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .color-circle.active { border-color: var(--primary); transform: scale(1.1); }
+        
+        .custom-color-input {
+            width: 30px; height: 30px; border: none; border-radius: 50%; 
+            cursor: pointer; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+        }
+
+        .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .action-btn { flex: 1; background: var(--primary); color: white; padding: 8px; font-size: 0.8rem; border-radius: 10px; border: none; cursor: pointer; }
+        .undo-btn { background: #607d8b; }
+        
+        h3 { 
+            font-size: 0.9rem; margin: 0 0 10px 0; opacity: 0.8; 
+            border-inline-start: 3px solid var(--primary); padding-inline-start: 8px; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="side-panel">
+        <div class="section-box">
+            <!-- בורר שפה עם תווית -->
+            <div class="lang-wrapper">
+                <span data-i18n="lang_label" style="font-size: 0.85rem; font-weight: bold;">שפה / Language:</span>
+                <select id="lang-selector" onchange="changeLanguage(this.value)">
+                    <option value="he">עברית</option>
+                    <option value="en">English</option>
+                    <option value="ar">العربية</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+
+            <h3 data-i18n="calc_title">מחשבון מדעי</h3>
+            <input type="text" id="calc-screen" placeholder="0" readonly>
+            <div class="calc-grid">
+                <button onclick="add('sin(')">sin</button>
+                <button onclick="add('cos(')">cos</button>
+                <button onclick="add('tan(')">tan</button>
+                <button onclick="add('sqrt(')">√</button>
+                <button onclick="add('^')">^</button>
+                
+                <button class="btn-num" onclick="add('7')">7</button>
+                <button class="btn-num" onclick="add('8')">8</button>
+                <button class="btn-num" onclick="add('9')">9</button>
+                <button onclick="add('/')">÷</button>
+                <button onclick="backspace()">⌫</button>
+
+                <button class="btn-num" onclick="add('4')">4</button>
+                <button class="btn-num" onclick="add('5')">5</button>
+                <button class="btn-num" onclick="add('6')">6</button>
+                <button onclick="add('*')">×</button>
+                <button style="background:#ffb4ab;" onclick="clearDisplay()">AC</button>
+
+                <button class="btn-num" onclick="add('1')">1</button>
+                <button class="btn-num" onclick="add('2')">2</button>
+                <button class="btn-num" onclick="add('3')">3</button>
+                <button onclick="add('-')">-</button>
+                <button onclick="add('+')">+</button>
+
+                <button class="btn-num" onclick="add('0')">0</button>
+                <button class="btn-num" onclick="add('.')">.</button>
+                <button onclick="add('PI')">π</button>
+                <button class="btn-equal" onclick="solve()">=</button>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <h3 data-i18n="history_title">היסטוריה מקומית</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <div class="section-box" style="border-bottom:none;">
+            <h3 data-i18n="tools_title">כלי לוח וצבעים</h3>
+            <div class="color-palette">
+                <div class="color-circle active" style="background: #000000;" onclick="setColor('#000000', this)"></div>
+                <div class="color-circle" style="background: #d32f2f;" onclick="setColor('#d32f2f', this)"></div>
+                <div class="color-circle" style="background: #388e3c;" onclick="setColor('#388e3c', this)"></div>
+                <div class="color-circle" style="background: #1976d2;" onclick="setColor('#1976d2', this)"></div>
+                <div class="color-circle" style="background: #fbc02d;" onclick="setColor('#fbc02d', this)"></div>
+                <div class="color-circle" style="background: #7b1fa2;" onclick="setColor('#7b1fa2', this)"></div>
+                <input type="color" id="customColor" class="custom-color-input" oninput="setColor(this.value, this)">
+            </div>
+
+            <div class="controls" style="margin-bottom:15px;">
+                <span data-i18n="width_label" style="font-size: 0.8rem;">עובי:</span>
+                <input type="range" id="penWidth" min="1" max="25" value="3" style="flex:1">
+            </div>
+
+            <div class="controls">
+                <button class="action-btn undo-btn" onclick="undo()" data-i18n="undo_btn">↩ בטל צעד</button>
+                <button class="action-btn" id="eraserBtn" onclick="toggleEraser()" data-i18n="eraser_btn">🧼 מחקן</button>
+                <button class="action-btn" style="background:#ba1a1a;" onclick="clearCanvas()" data-i18n="clear_btn">🗑 נקה הכל</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="mathCanvas"></canvas>
+    </div>
+
+    <script>
+        // --- מערכת תרגום מורחבת ---
+        const translations = {
+            he: {
+                lang_label: "בחר שפה:",
+                calc_title: "מחשבון מדעי",
+                history_title: "היסטוריה מקומית",
+                tools_title: "כלי לוח וצבעים",
+                width_label: "עובי:",
+                undo_btn: "↩ בטל צעד",
+                eraser_btn: "🧼 מחקן",
+                clear_btn: "🗑 נקה הכל",
+                error: "שגיאה",
+                dir: "rtl"
+            },
+            en: {
+                lang_label: "Language:",
+                calc_title: "Scientific Calculator",
+                history_title: "Local History",
+                tools_title: "Board Tools",
+                width_label: "Width:",
+                undo_btn: "↩ Undo",
+                eraser_btn: "🧼 Eraser",
+                clear_btn: "🗑 Clear All",
+                error: "Error",
+                dir: "ltr"
+            },
+            ar: {
+                lang_label: "اختر اللغة:",
+                calc_title: "آلة حاسبة علمية",
+                history_title: "السجل المحلي",
+                tools_title: "أدوات اللوحة",
+                width_label: "السمك:",
+                undo_btn: "↩ تراجع",
+                eraser_btn: "🧼 ممحاة",
+                clear_btn: "🗑 مسح الكل",
+                error: "خطأ",
+                dir: "rtl"
+            },
+            ru: {
+                lang_label: "Язык:",
+                calc_title: "Калькулятор",
+                history_title: "История",
+                tools_title: "Инструменты",
+                width_label: "Толщина:",
+                undo_btn: "↩ Отмена",
+                eraser_btn: "🧼 Ластик",
+                clear_btn: "🗑 Очистить",
+                error: "Ошибка",
+                dir: "ltr"
+            }
+        };
+
+        function changeLanguage(lang) {
+            localStorage.setItem('math_lang', lang);
+            const t = translations[lang];
+            document.body.dir = t.dir;
+            document.documentElement.lang = lang;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerText = t[key];
+            });
+            updateHistoryUI();
+        }
+
+        const savedLang = localStorage.getItem('math_lang') || 'he';
+        document.getElementById('lang-selector').value = savedLang;
+        setTimeout(() => changeLanguage(savedLang), 10);
+
+        // --- לוגיקת מחשבון ---
+        const screen = document.getElementById('calc-screen');
+        const historyList = document.getElementById('history-list');
+        let calcHistory = JSON.parse(localStorage.getItem('mathHistory') || '[]');
+
+        function updateHistoryUI() {
+            historyList.innerHTML = calcHistory.map((item, index) => `
+                <div class="hist-item" onclick="useHistory('${item.res}')">
+                    <span>${item.exp}</span>
+                    <strong>= ${item.res}</strong>
+                </div>
+            `).reverse().join('');
+        }
+
+        function add(val) { screen.value += val; }
+        function clearDisplay() { screen.value = ""; }
+        function backspace() { screen.value = screen.value.slice(0, -1); }
+        function useHistory(val) { screen.value = val; }
+
+        function solve() {
+            try {
+                let exp = screen.value;
+                if(!exp) return;
+                let result = math.evaluate(exp.replace('×', '*').replace('÷', '/'));
+                let formattedRes = math.format(result, {precision: 10});
+                calcHistory.push({exp: exp, res: formattedRes});
+                if(calcHistory.length > 20) calcHistory.shift();
+                localStorage.setItem('mathHistory', JSON.stringify(calcHistory));
+                screen.value = formattedRes;
+                updateHistoryUI();
+            } catch (e) {
+                const lang = document.getElementById('lang-selector').value;
+                screen.value = translations[lang].error;
+                setTimeout(clearDisplay, 1000);
+            }
+        }
+
+        // --- לוגיקת ציור ---
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let isEraser = false;
+        let currentColor = '#000000';
+        let undoStack = [];
+
+        function saveState() {
+            if (undoStack.length >= 25) undoStack.shift();
+            undoStack.push(canvas.toDataURL());
+        }
+
+        function resize() {
+            const container = document.getElementById('canvas-container');
+            const tempImg = canvas.toDataURL();
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            const img = new Image();
+            img.src = tempImg;
+            img.onload = () => ctx.drawImage(img, 0, 0);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function start(e) {
+            saveState();
+            drawing = true;
+            ctx.beginPath();
+            const pos = getPos(e);
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.lineWidth = document.getElementById('penWidth').value;
+            if (isEraser) {
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                ctx.strokeStyle = isDark ? '#1c1b1f' : '#ffffff';
+            } else {
+                ctx.strokeStyle = currentColor;
+            }
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stop() { drawing = false; ctx.closePath(); }
+
+        function undo() {
+            if (undoStack.length > 0) {
+                const previousState = undoStack.pop();
+                const img = new Image();
+                img.src = previousState;
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+            }
+        }
+
+        function setColor(color, el) {
+            isEraser = false;
+            currentColor = color;
+            document.querySelectorAll('.color-circle, .custom-color-input').forEach(c => c.classList.remove('active'));
+            if(el) el.classList.add('active');
+            document.getElementById('eraserBtn').style.background = "var(--primary)";
+        }
+
+        function toggleEraser() {
+            isEraser = !isEraser;
+            document.getElementById('eraserBtn').style.background = isEraser ? "#000" : "var(--primary)";
+        }
+
+        function clearCanvas() {
+            saveState();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stop);
+        canvas.addEventListener('touchstart', start, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        canvas.addEventListener('touchend', stop);
+        
+        updateHistoryUI();
+    </script>
+</body>
+</html>
