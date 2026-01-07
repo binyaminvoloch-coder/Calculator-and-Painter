@@ -4,7 +4,7 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox
 
 const CACHE = "pwabuilder-page";
 
-// TODO: replace the following with the correct offline fallback page i.e.: const offlineFallbackPage = "offline.html";
+// TODO: replace the following with the correct offline fallback page i.e.: const offlineFallbackPage = "index.html";
 const offlineFallbackPage = "ToDo-replace-this-name.html";
 
 self.addEventListener("message", (event) => {
@@ -44,4 +44,5 @@ self.addEventListener('fetch', (event) => {
       }
     })());
   }
+
 });
