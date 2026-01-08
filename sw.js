@@ -1,45 +1,36 @@
-// This is the "Offline page" service worker
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-const CACHE = "pwabuilder-page";
+const CACHE = "mathstudio-cache-v1";
 
-// תיקון: הגדרת דף הבית כדף לשימוש במצב אופליין
-const offlineFallbackPage = "index.html";
+// קבצים לשמירה מיידית
+const ASSETS = [
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  'https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js'
+];
 
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-self.addEventListener('install', async (event) => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.add(offlineFallbackPage))
+    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
   );
+  self.skipWaiting(); // הפעלת ה-SW החדש מיד
 });
 
-if (workbox.navigationPreload.isSupported()) {
-  workbox.navigationPreload.enable();
-}
+// שימוש באסטרטגיית Stale-While-Revalidate לביצועים מהירים + עדכונים
+workbox.routing.registerRoute(
+  ({request}) => request.destination === 'image' || request.destination === 'script' || request.destination === 'style',
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: 'assets-cache',
+  })
+);
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        const preloadResp = await event.preloadResponse;
-
-        if (preloadResp) {
-          return preloadResp;
-        }
-
-        const networkResp = await fetch(event.request);
-        return networkResp;
-      } catch (error) {
-        const cache = await caches.open(CACHE);
-        const cachedResp = await cache.match(offlineFallbackPage);
-        return cachedResp;
-      }
-    })());
-  }
-});
+// עבור ניווט (HTML), נסה רשת ואז מטמון
+workbox.routing.registerRoute(
+  ({request}) => request.mode === 'navigate',
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'pages-cache',
+    networkTimeoutSeconds: 3
+  })
+);
