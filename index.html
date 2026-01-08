@@ -202,6 +202,38 @@
         document.getElementById('lang-selector').value = savedLang;
         setTimeout(() => changeLanguage(savedLang), 10);
 
+        // --- טיפול ב-PWA Features (Share Target & Shortcuts) ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            
+            // 1. טיפול בשיתוף טקסט (Share Target)
+            if (params.has('text')) {
+                const sharedText = params.get('text');
+                const screen = document.getElementById('calc-screen');
+                if (screen) {
+                    screen.value = sharedText;
+                    // אופציונלי: אפשר להוסיף אנימציה קטנה כדי לסמן שנקלט מידע
+                    screen.style.borderColor = 'var(--primary)';
+                    setTimeout(() => screen.style.borderColor = 'var(--secondary)', 1000);
+                }
+            }
+
+            // 2. טיפול בקיצורי דרך (Shortcuts)
+            if (params.has('mode')) {
+                const mode = params.get('mode');
+                // אם המשתמש בחר ב"ציור" והוא במובייל, נגלול לקנבס
+                if (mode === 'draw' && window.innerWidth <= 768) {
+                    const canvasContainer = document.getElementById('canvas-container');
+                    if (canvasContainer) {
+                        // השהיה קטנה כדי לוודא שהדף נטען
+                        setTimeout(() => {
+                            canvasContainer.scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                    }
+                }
+            }
+        });
+
         // --- לוגיקת מחשבון ---
         const screen = document.getElementById('calc-screen');
         const historyList = document.getElementById('history-list');
