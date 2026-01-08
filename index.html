@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#6750a4">
     
-    <title>MathStudio Pro Multi-Lang</title>
+    <title>MathStudio Pro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -336,7 +336,7 @@
         
         updateHistoryUI();
 
-        // --- SERVICE WORKER REGISTRATION (תיקון PWABuilder) ---
+        // --- רישום ה-SERVICE WORKER (ל-PWABuilder) ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
