@@ -12,6 +12,13 @@
   "lang": "he",
   "dir": "rtl",
   "categories": ["education", "utilities"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "display_override": ["window-controls-overlay", "minimal-ui"],
   "icons": [
     { "src": "icon-72.png", "sizes": "72x72", "type": "image/png" },
     { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" },
@@ -20,6 +27,32 @@
     { "src": "icon-256.png", "sizes": "256x256", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
+  "shortcuts": [
+    {
+      "name": "מחשבון",
+      "short_name": "מחשבון",
+      "description": "פתח את המחשבון המדעי",
+      "url": "./index.html?mode=calc",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "לוח ציור",
+      "short_name": "ציור",
+      "description": "פתח לוח חלק לציור",
+      "url": "./index.html?mode=draw",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "screenshots": [
     {
       "src": "mobile-1.png",
@@ -50,4 +83,4 @@
       "label": "תצוגת מחשב רחבה - לוח ציור"
     }
   ]
-    }
+}
