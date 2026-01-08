@@ -2,7 +2,7 @@
   "id": "/?homescreen=1",
   "name": "MathStudio Pro",
   "short_name": "MathStudio",
-  "description": "מחשבון מדעי מתקדם עם לוח ציור ולימוד מתמטיקה",
+  "description": "מחשבון מדעי מתקדם הכולל לוח ציור אינטראקטיבי לפתרון תרגילים ולימוד מתמטיקה בצורה ויזואלית.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -11,6 +11,7 @@
   "orientation": "any",
   "lang": "he",
   "dir": "rtl",
+  "categories": ["education", "utilities"],
   "icons": [
     { "src": "icon-72.png", "sizes": "72x72", "type": "image/png" },
     { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" },
@@ -21,19 +22,32 @@
   ],
   "screenshots": [
     {
-      "src": "screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Calculator Desktop View"
-    },
-    {
-      "src": "screenshot2.png",
-      "sizes": "720x1280",
+      "src": "mobile-1.png",
+      "sizes": "1080x2408",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Calculator Mobile View"
+      "label": "ממשק המחשבון במובייל"
+    },
+    {
+      "src": "mobile-2.png",
+      "sizes": "1080x2408",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "לוח הציור במובייל"
+    },
+    {
+      "src": "desktop-1.png",
+      "sizes": "2408x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "תצוגת מחשב רחבה - מחשבון"
+    },
+    {
+      "src": "desktop-2.png",
+      "sizes": "2408x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "תצוגת מחשב רחבה - לוח ציור"
     }
-  ],
-  "categories": ["education", "utilities"]
-}
+  ]
+    }
