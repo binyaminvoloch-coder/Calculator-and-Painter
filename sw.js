@@ -1,36 +1,30 @@
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-const CACHE = "mathstudio-cache-v1";
+// שם המטמון (Cache)
+const CACHE_NAME = 'mathstudio-v2';
 
-// קבצים לשמירה מיידית
-const ASSETS = [
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting(); // הפעלת ה-SW החדש מיד
-});
-
-// שימוש באסטרטגיית Stale-While-Revalidate לביצועים מהירים + עדכונים
+// 1. שמירת ספריות חיצוניות (כמו math.js) וקבצי המערכת
 workbox.routing.registerRoute(
-  ({request}) => request.destination === 'image' || request.destination === 'script' || request.destination === 'style',
-  new workbox.strategies.StaleWhileRevalidate({
-    cacheName: 'assets-cache',
-  })
+    ({request}) => request.destination === 'script' || request.destination === 'style' || request.destination === 'document',
+    new workbox.strategies.NetworkFirst({
+        cacheName: 'static-resources',
+    })
 );
 
-// עבור ניווט (HTML), נסה רשת ואז מטמון
+// 2. שמירת תמונות ואייקונים
 workbox.routing.registerRoute(
-  ({request}) => request.mode === 'navigate',
-  new workbox.strategies.NetworkFirst({
-    cacheName: 'pages-cache',
-    networkTimeoutSeconds: 3
-  })
+    ({request}) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+        cacheName: 'images',
+        plugins: [
+            new workbox.expiration.ExpirationPlugin({
+                maxEntries: 50,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // שמירה ל-30 יום
+            }),
+        ],
+    })
 );
+
+// הפעלה מיידית של העדכון
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());
