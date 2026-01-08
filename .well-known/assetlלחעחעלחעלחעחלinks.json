@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.binyaminvoloch_coder.twa",
-        "sha256_cert_fingerprints": ["6D:E5:C5:ED:9E:04:4B:FD:FA:02:BF:63:8D:6B:03:02:E6:E4:8D:3A:0A:7E:DF:18:AF:7B:9B:E8:2C:16:0E:9D"]
-      }
-    }]
